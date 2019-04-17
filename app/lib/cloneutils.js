@@ -1,5 +1,6 @@
 import { GitProcess } from "dugite"
 import ProgressParser from "./progressutils"
+import { deleteGitFolder } from "./pathutils";
 
 // Public: Clones a public git repository to the specified destination directory,
 // and notifies the caller of clone progress via callback.
@@ -41,7 +42,7 @@ export const clone = async (repoURL, destination, progressCallback) => {
   progressCallback(0)
 
   const result = await GitProcess.exec(
-    ["clone", repoURL, "--progress", "."],
+    ["clone", "--depth", "1", repoURL, "--progress", "."],
     destination,
     options
   )
@@ -51,4 +52,6 @@ export const clone = async (repoURL, destination, progressCallback) => {
   } else {
     throw new Error("Git Clone Process Failed.")
   }
+
+  await deleteGitFolder(destination)
 }

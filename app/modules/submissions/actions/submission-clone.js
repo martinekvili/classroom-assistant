@@ -6,7 +6,7 @@ import { submissionSetCloneProgress } from "./submission-set-clone-progress"
 import { submissionSetClonePath } from "./submission-set-clone-path"
 import { submissionSetCloneStatus } from "./submission-set-clone-status"
 
-import { getClonePath } from "../../../lib/pathutils"
+import { getClonePath, getSanitizedStudentUserName } from "../../../lib/pathutils"
 
 import {
   SUBMISSION_CLONE_IN_PROGRESS,
@@ -23,9 +23,17 @@ const {trackEvent} = require("../../../main-process/analytics")
 // progress/display errors in the UI
 
 export const submissionCloneFunc = (clone) => {
-  return (submissionProps, cloneDirectory) => {
+  return (submissionProps, cloneDirectory, alreadyDownloadedSubmissions) => {
     return async (dispatch, getState) => {
       const submissionAuthorUsername = submissionProps.username
+      const alreadyDownloadedPath = alreadyDownloadedSubmissions[getSanitizedStudentUserName(submissionAuthorUsername)]
+
+      if (alreadyDownloadedPath) {
+        dispatch(submissionSetClonePath(submissionProps.id, alreadyDownloadedPath))
+        dispatch(submissionSetCloneProgress(submissionProps.id, 100))
+        dispatch(submissionSetCloneStatus(submissionProps.id, SUBMISSION_CLONE_SUCCESS))
+        return
+      }
 
       // Sets to null if password cannot be found
       // TODO: Add specific error message/ask for reauthorization if clone
